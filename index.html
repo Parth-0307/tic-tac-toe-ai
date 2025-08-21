@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe with AI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f9;
+    }
+    h1 { margin: 20px; }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      margin: 20px auto;
+      width: max-content;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      cursor: pointer;
+      border: 2px solid #333;
+    }
+    .cell.taken { cursor: not-allowed; }
+    #status { margin-top: 15px; font-size: 1.2em; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe with AI</h1>
+  <div class="board" id="board"></div>
+  <div id="status">Your turn!</div>
+  <button onclick="restartGame()">Restart</button>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let gameOver = false;
+
+    // Create board
+    board.forEach((_, i) => {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.addEventListener("click", () => playerMove(i));
+      boardEl.appendChild(cell);
+    });
+
+    function playerMove(i) {
+      if (board[i] || gameOver) return;
+      board[i] = "X";
+      updateBoard();
+      if (checkWinner(board, "X")) {
+        statusEl.textContent = "You win!";
+        gameOver = true;
+        return;
+      }
+      if (board.every(c => c)) {
+        statusEl.textContent = "Draw!";
+        gameOver = true;
+        return;
+      }
+      aiMove();
+    }
+
+    function aiMove() {
+      let bestScore = -Infinity, move;
+      board.forEach((c, i) => {
+        if (!c) {
+          board[i] = "O";
+          let score = minimax(board, 0, false);
+          board[i] = "";
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      });
+      board[move] = "O";
+      updateBoard();
+      if (checkWinner(board, "O")) {
+        statusEl.textContent = "AI wins!";
+        gameOver = true;
+        return;
+      }
+      if (board.every(c => c)) {
+        statusEl.textContent = "Draw!";
+        gameOver = true;
+      }
+    }
+
+    function minimax(b, depth, isMax) {
+      if (checkWinner(b, "O")) return 10 - depth;
+      if (checkWinner(b, "X")) return depth - 10;
+      if (b.every(c => c)) return 0;
+
+      if (isMax) {
+        let best = -Infinity;
+        b.forEach((c, i) => {
+          if (!c) {
+            b[i] = "O";
+            best = Math.max(best, minimax(b, depth + 1, false));
+            b[i] = "";
+          }
+        });
+        return best;
+      } else {
+        let best = Infinity;
+        b.forEach((c, i) => {
+          if (!c) {
+            b[i] = "X";
+            best = Math.min(best, minimax(b, depth + 1, true));
+            b[i] = "";
+          }
+        });
+        return best;
+      }
+    }
+
+    function checkWinner(b, p) {
+      const winPatterns = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      return winPatterns.some(pattern => pattern.every(i => b[i] === p));
+    }
+
+    function updateBoard() {
+      [...boardEl.children].forEach((cell, i) => {
+        cell.textContent = board[i];
+        if (board[i]) cell.classList.add("taken");
+        else cell.classList.remove("taken");
+      });
+    }
+
+    function restartGame() {
+      board = ["", "", "", "", "", "", "", "", ""];
+      gameOver = false;
+      statusEl.textContent = "Your turn!";
+      updateBoard();
+    }
+
+    updateBoard();
+  </script>
+</body>
+</html>
